@@ -12,6 +12,11 @@ from datetime import datetime
 
 from ckan.lib.celery_app import celery
 
+import logging
+import urllib2
+from urllib2 import Request, urlopen, URLError, HTTPError
+log = logging.getLogger('ckanext.archiver')
+
 try:
     from ckanext.archiver import settings
 except ImportError:
@@ -86,8 +91,8 @@ def download(context, resource, url_timeout=30,
     DownloadError is raised.
     '''
     
-    log = update.get_logger()
-    
+    #log = update.get_logger()
+   
     url = resource['url']
 
     if (resource.get('resource_type') == 'file.upload' and
@@ -197,6 +202,7 @@ def download(context, resource, url_timeout=30,
 
     log.info('Resource downloaded: id=%s url=%r cache_filename=%s length=%s hash=%s',
              resource['id'], url, saved_file, length, hash)
+      
 
     return {'length': length,
             'hash' : hash,
@@ -214,12 +220,12 @@ def clean():
 
 @celery.task(name = "archiver.update")
 def update(context, data):
-    log = update.get_logger()
+    #log = update.get_logger()
     log.info('Starting update task: %r', data)
     try:
         data = json.loads(data)
         context = json.loads(context)
-        result = _update(context, data) 
+        result = _update(context, data)         
         return result
     except ArchiverError, e:
         log.error('Archive error during update: %s\nResource: %s',
@@ -250,7 +256,7 @@ def _update(context, data):
             'file_path': path to archived file (if archive successful), or None
         }
     """
-    log = update.get_logger()
+    #log = update.get_logger()
     data.pop(u'revision_id', None)
 
     # check that archive directory exists
@@ -285,6 +291,7 @@ def _update(context, data):
     log.info("Attempting to archive resource: %s" % data['url'])
     file_path = archive_resource(context, data, log, result)
 
+    
     return json.dumps({
         'resource': data,
         'file_path': file_path
@@ -301,7 +308,7 @@ def link_checker(context, data):
 
     Returns a json dict of the headers of the request
     """
-    log = update.get_logger()
+    #log = update.get_logger()
     data = json.loads(data)
     url_timeout = data.get('url_timeout', 30)
 
@@ -441,26 +448,51 @@ def _update_resource(context, resource, log):
     Returns the content of the response. 
     
     """
+
     api_url = urlparse.urljoin(context['site_url'], 'api/action') + '/resource_update'
     resource['last_modified'] = datetime.now().isoformat()
-    post_data = json.dumps(resource)
-    res = requests.post(
+    post_data = '%s=1' % json.dumps(resource)
+    '''res = requests.post(
         api_url, post_data,
         headers = {'Authorization': context['apikey'],
                    'Content-Type': 'application/json'}
-    )
+    )'''
     
-    if res.status_code == 200:
-        log.info('Resource updated OK: %s', resource['id'])
-        return res.content
+    headers = { "Accept" : "application/json",
+                "Conthent-Type": "application/json",    
+                'Authorization': context['apikey']
+              }
+              
+    req = urllib2.Request(api_url, post_data, headers)
+    try:
+        response = urllib2.urlopen(req)
+    except HTTPError as e:  
+        log.error('The server couldn\'t fulfill the request. Error code: %s'
+                            % (e.code))
+    except URLError as e: 
+        log.error('We failed to reach a server. Reason: %s'
+                            % (e.reason))
+    except:      
+      pass     
     else:
-        try:
-            content = res.content
-        except:
-            content = '<could not read request content to discover error>'
-        log.error('ckan failed to update resource, status_code (%s), error %s. Maybe the API key or site URL are wrong?.\ncontext: %r\nresource: %r\nres: %r\nres.error: %r\npost_data: %r\napi_url: %r'
-                        % (res.status_code, content, context, resource, res, res.error, post_data, api_url))
-        raise CkanError('ckan failed to update resource, status_code (%s), error %s'  % (res.status_code, content))
+        
+        f = response.read()
+        res = json.loads(f)
+        
+        #if res.status_code == 200:
+        if res.getcode() == 200:
+            log.info('Resource updated OK: %s', resource['id'])
+            #return res.content
+            return json.dumps(content.get('result').get('results'))
+        else:
+            try:
+                #content = res.content
+                content = json.dumps(content.get('result').get('results'))
+            except:
+                content = '<could not read request content to discover error>'
+            log.error('ckan failed to update resource, status_code (%s), error %s. Maybe the API key or site URL are wrong?.\ncontext: %r\nresource: %r\nres: %r\nres.error: %r\npost_data: %r\napi_url: %r'
+                            % (res.status_code, content, context, resource, res, res.error, post_data, api_url))
+            raise CkanError('ckan failed to update resource, status_code (%s), error %s'  % (res.status_code, content))
 
 def update_task_status(context, data, log):
     """

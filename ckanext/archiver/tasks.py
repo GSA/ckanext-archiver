@@ -107,7 +107,6 @@ class LinkHeadMethodNotSupported(LinkCheckerError):
 class CkanError(ArchiverError):
     pass
 
-
 @celery.task(name="archiver.update_resource")
 def update_resource(ckan_ini_filepath, resource_id, queue='bulk'):
     '''
@@ -160,7 +159,6 @@ def update_package(ckan_ini_filepath, package_id, queue='bulk'):
                   e, package_id)
         raise
 
-
 def _update_package(package_id, queue, log):
     from ckan import model
 
@@ -204,7 +202,6 @@ def _update_search_index(package_id, log):
     package = toolkit.get_action('package_show')(context_, {'id': package_id})
     package_index.index_package(package, defer_commit=False)
     log.info('Search indexed %s', package['name'])
-
 
 def _update_resource(resource_id, queue, log):
     """
@@ -383,7 +380,6 @@ def _update_resource(resource_id, queue, log):
 
     # The return value is only used by tests. Serialized for Celery.
     return json.dumps(dict(download_result, **archive_result))
-
 
 def download(context, resource, url_timeout=20,
              max_content_length='default',
@@ -615,7 +611,6 @@ def archive_resource(context, resource, log, result=None, url_timeout=30):
     return {'cache_filepath': saved_file,
             'cache_url': cache_url}
 
-
 def notify_resource(resource, queue, cache_filepath):
     '''
     Broadcasts an IPipe notification that an resource archival has taken place
@@ -675,7 +670,6 @@ def tidy_url(url):
 
     It may raise LinkInvalidError if the URL has a problem.
     '''
-
     # Find out if it has unicode characters, and if it does, quote them
     # so we are left with an ascii string
     try:
@@ -910,7 +904,6 @@ def wfs_request(context, resource):
     res = ogc_request(context, resource, 'WFS', '2.0')
     res['request_type'] = 'WFS 2.0'
     return res
-
 
 def api_request(context, resource):
     '''

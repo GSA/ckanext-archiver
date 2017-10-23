@@ -225,10 +225,12 @@ Config settings
 
         ckan.plugins = archiver
 
-    If there are other plugins activated, add this to the list (each plugin should be separated with a space).
+    If there are other plugins activated, add this to the list (each plugin
+    should be separated with a space).
 
-    **Note:** You can still run the archiver manually (from the command line) on specific resources or on all resources
-    in a CKAN instance without enabling the plugin. See section 'Using Archiver' for details.
+    **Note:** You can still run the archiver manually (from the command line)
+    on specific resources or on all resources in a CKAN instance without
+    enabling the plugin. See section 'Using Archiver' for details.
 
 2.  Other CKAN config options
 
@@ -237,8 +239,7 @@ Config settings
     * ``ckan.site_url`` = URL to your CKAN instance
 
     This is the URL that the archive process (in Celery) will use to access the CKAN API to update it about the cached URLs. If your internal network names your CKAN server differently, then specify this internal name in config option: ``ckan.site_url_internally``
-
-
+    
 3.  Additional Archiver settings
 
     Add the settings to the CKAN config file:
@@ -281,7 +282,6 @@ There used to be an option DATA_FORMATS for filtering the resources
 archived, but that has now been removed in ckanext-archiver v2.0, since it
 is now not only caching files, but is seen as a broken link checker, which
 applies whatever the format.
-
 
 Using Archiver
 --------------

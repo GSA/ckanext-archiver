@@ -816,24 +816,12 @@ def requests_wrapper(log, func, resource_blacklist, *args, **kwargs):
     #catch FTP error
     if 'ftp://' in resource_blacklist.url:
             try:
-                # TODO break it up and code for each type of exceptions
-                from urlparse import urlparse
-                import ftplib
-                o = urlparse(self.url)
-
-                ftp_timeout = 20 # in seconds
-                ftp_server = o.hostname
-                ftp_user = 'anonymous' if not o.username else o.username
-                ftp_pass = 'anonymous@' if not o.username else o.password
-                ftp_port = 21 if not o.port else o.port
-                ftp_filepath = o.path
-
-                ftp = ftplib.FTP()
-                ftp.connect(ftp_server, port=ftp_port, timeout=ftp_timeout)
-                ftp.login(ftp_user, ftp_pass)
-                if ftp_filepath.strip('/'):
-                    assert ftp.nlst(ftp_filepath)
+                import urllib2
+                dir_url = resource_blacklist.url.rsplit('/',1)[0]
+                ftp_dir_request = urllib2.urlopen(dir_url)
+                ftp_dir_request.close()
                 resource_blacklist.status_code = 200
+                return 200
                 return {'mimetype': None,
                         'size': 100,
                         'hash': None,

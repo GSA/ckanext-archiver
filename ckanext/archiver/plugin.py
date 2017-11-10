@@ -141,8 +141,9 @@ class ArchiverPlugin(p.SingletonPlugin, p.toolkit.DefaultDatasetForm):
     def register_reports(self):
         """Register details of an extension's reports"""
         from ckanext.archiver import reports
-        return [reports.broken_links_report_info,
-                ]
+        #return [reports.broken_links_report_info,
+        #        ]
+        return []
 
     # IConfigurer
 

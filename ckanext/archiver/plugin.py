@@ -32,7 +32,9 @@ class ArchiverPlugin(p.SingletonPlugin, p.toolkit.DefaultDatasetForm):
     def notify(self, entity, operation=None):
         if not isinstance(entity, model.Package):
             return
-
+        if entity.type == 'harvest':
+            return
+        
         log.debug('Notified of package event: %s %s', entity.name, operation)
 
         run_archiver = \
